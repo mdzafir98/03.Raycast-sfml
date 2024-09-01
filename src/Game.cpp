@@ -3,7 +3,7 @@
 void Game::initWindow(){
     window =new sf::RenderWindow(sf::VideoMode(WINDOW_WIDTH,WINDOW_HEIGHT),"Raycast!", 
         sf::Style::Close | sf::Style::Titlebar);
-    window->setFramerateLimit(60);
+    window->setFramerateLimit(100);
     window->setVerticalSyncEnabled(false);
 }
 
@@ -12,8 +12,8 @@ void Game::initPlayer(){
 }
 
 void Game::initMinimapTile(){
-    // minimapTile.setSize({64,64});
-    // minimapTile.setOutlineThickness(1.f);
+    minimapTile.setSize({64,64});
+    minimapTile.setOutlineThickness(1.f);
     wall.tileShape.setSize({64,64});
     wall.tileShape.setOutlineThickness(1.f);
 }
@@ -31,6 +31,7 @@ Game::Game(){
     initWindow();
     initPlayer();
     initMinimapTile();
+    setObstacle();
     initRenderer();
 }
 
@@ -94,7 +95,7 @@ void Game::raycast(){
                 mp = my*bitSize + mx;
 
                 //check for wall collisions to stop the ray
-                if (mp>0 && mp <mapx*mapy && map2D[mp]==1){
+                if (mp>0 && mp <mapx*mapy && (map2D[mp]==1 or map2D[mp]==2)){
                     hx =rx;
                     hy =ry;
                     distH =dist(spriteCentre.x, spriteCentre.y,rx,ry);
@@ -136,7 +137,7 @@ void Game::raycast(){
                 mp = my*bitSize + mx;
 
                 //check for wall collision to stop the ray
-                if (mp>0 && mp<mapx*mapy && map2D[mp]==1){
+                if (mp>0 && mp<mapx*mapy && (map2D[mp]==1 or map2D[mp]==2)){
                     vx =rx;
                     vy =ry;
                     distV =dist(spriteCentre.x, spriteCentre.y, vx, vy);
@@ -196,23 +197,25 @@ void Game::updatePollevents(){
 
 void Game::updateInput(){
     //move player using wasd
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
-        player->move('f');
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-        player->turn('l');
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
-        player->move('b');
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
-        player->turn('r');
+    if (canMove){
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
+            player->move('f');
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
+            player->turn('l');
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)){
+            player->move('b');
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)){
+            player->turn('r');
+        }
     }
 }
 
 void Game::update(){
     updateInput();
-    wallCollision();
+    updateCollision();
 }
 
 void Game::render(){
@@ -220,6 +223,7 @@ void Game::render(){
     renderMap();
     renderRaycast();
     renderPlayerLine();
+    renderObstacle();
     player->render(*window);
     window->display();
 }
@@ -252,6 +256,11 @@ void Game::renderMap(){
                     wall.tileShape.setFillColor(sf::Color(255,255,255,255));
                     wall.tileShape.setOutlineColor(sf::Color::Black);
                     break;
+                case 2:
+                    wall.tileType =2;
+                    wall.tileShape.setFillColor(sf::Color(255,255,255,255));
+                    wall.tileShape.setOutlineColor(sf::Color::Black);
+                    break;
                 default:
                     wall.tileType =0;
                     wall.tileShape.setFillColor(sf::Color(0,0,0,255));
@@ -261,6 +270,25 @@ void Game::renderMap(){
             wall.tileShape.setPosition(x*mapS, y*mapS);
             window->draw(wall.tileShape);
         }
+    }
+}
+
+void Game::setObstacle(){
+    for (int y=0; y<mapy; y++){
+        for (int x =0; x<mapx; x++){
+            if (map2D[y*bitSize+x]==2){
+                minimapTile.setPosition(x*mapS, y*mapS);
+                minimapTile.setFillColor(sf::Color::Green);
+                minimapTile.setOutlineColor(sf::Color::Black);
+                obstacles.push_back(minimapTile);
+            }
+        }
+    }
+}
+
+void Game::renderObstacle(){
+    for (auto i:obstacles){
+        window->draw(i);
     }
 }
 
@@ -277,13 +305,38 @@ void Game::renderPlayerLine(){
         {spriteCentre.x+player->pdx*20,spriteCentre.y+player->pdy*20},{255,255,255});
 }
 
-void Game::wallCollision(){
+void Game::updateCollision(){
+    //collision with bottom wall
     if (player->getBounds().top+player->getBounds().height>window->getSize().y-64.f){
         std::cout << "collision with bottom wall!" << " ";
         std::cout << "player position: " << player->getPos().x << " " << player->getPos().y << "\n";
         player->setPos({player->getBounds().left,window->getSize().y-player->getBounds().height-64.f});
     }
-    if (player->getBounds().intersects(wall.getBounds())){
-        std::cout << "collision with wall!" << std::endl;
+    //collision with left wall
+    if (player->getBounds().left<64.f){
+        std::cout << "collision with left wall!" << " ";
+        std::cout << "player position: " << player->getPos().x << " " << player->getPos().y << "\n";
+        player->setPos({64.f,player->getBounds().top});
+    }
+    //collision with right wall
+    if (player->getBounds().left+player->getBounds().width>window->getSize().x/2-64.f){
+        std::cout << "collision with right wall!" << " ";
+        std::cout << "player position: " << player->getPos().x << " " << player->getPos().y << "\n";
+        player->setPos({window->getSize().x/2-player->getBounds().width-64.f,player->getBounds().top});
+    }
+    //collision with top wall
+    if (player->getBounds().top<64.f){
+        std::cout << "collision with top wall!" << " ";
+        std::cout << "player position: " << player->getPos().x << " " << player->getPos().y << "\n";
+        player->setPos({player->getBounds().left,64.f});
+    }
+    //TODO: collision with obstacles
+    for (auto obstacle:obstacles){
+        if (player->getBounds().intersects(obstacle.getGlobalBounds())){
+            canMove =false;
+            std::cout << "collision with obstacle! player position: " << player->getPos().x << " " << player->getPos().y <<"\n";
+            player->setPos({player->getPos().x+1.f,player->getPos().y+1.f});
+        }
+        canMove =true;
     }
 }

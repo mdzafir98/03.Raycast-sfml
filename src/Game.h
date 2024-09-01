@@ -1,7 +1,8 @@
 #pragma once
-#include "Constants.h"
 #include <memory>
+#include <vector>
 
+#include "Constants.h"
 #include "Sprite.h"
 #include "Renderer.h"
 
@@ -17,6 +18,7 @@ private:
     Sprite* player;
     Renderer* renderer;
     sf::CircleShape ball;
+    bool canMove =true;
 
     void initWindow();
     void initPlayer();
@@ -32,11 +34,11 @@ private:
     int map2D[64] =
 {
 	1,1,1,1,1,1,1,1,
-	1,0,1,0,0,0,0,1,
-	1,0,1,0,1,0,0,1,
+	1,0,2,0,0,0,0,1,
+	1,0,2,0,2,0,0,1,
 	1,0,0,0,0,0,0,1,
-	1,0,0,0,0,1,0,1,
-	1,0,1,0,0,1,0,1,
+	1,0,0,0,0,2,0,1,
+	1,0,2,0,0,2,0,1,
 	1,0,0,0,0,0,0,1,
 	1,1,1,1,1,1,1,1
 };
@@ -79,7 +81,10 @@ private:
         }
     };
     Tile wall;
-    void wallCollision();
+    std::vector<sf::RectangleShape> obstacles;
+    void updateCollision();
+    void setObstacle();
+    void renderObstacle();
 public:
     Game();
     ~Game();
