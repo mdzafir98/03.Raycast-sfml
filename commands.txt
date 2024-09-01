@@ -1,0 +1,5 @@
+to compile and make .exe file:
+g++ -o main.exe main.cpp src/Game.cpp src/Sprite.cpp src/Renderer.cpp -lsfml-graphics -lsfml-window -lsfml-system
+
+to run main.exe:
+./main.exe
