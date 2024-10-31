@@ -96,6 +96,9 @@ public:
     void updatePollevents();
     void updateInput();
     void update();
+    sf::Clock clock;
+    sf::Time elapsed = clock.getElapsedTime();
+    double lastTime = elapsed.asSeconds();
 
     //render
     void render();

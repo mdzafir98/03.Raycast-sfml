@@ -3,7 +3,7 @@
 void Game::initWindow(){
     window =new sf::RenderWindow(sf::VideoMode(WINDOW_WIDTH,WINDOW_HEIGHT),"Raycast!", 
         sf::Style::Close | sf::Style::Titlebar);
-    window->setFramerateLimit(100);
+    window->setFramerateLimit(60);
     window->setVerticalSyncEnabled(false);
 }
 
@@ -214,8 +214,14 @@ void Game::updateInput(){
 }
 
 void Game::update(){
-    updateInput();
-    updateCollision();
+    sf::Time elapsed2 = clock.getElapsedTime();
+    double currentTime = elapsed2.asSeconds();
+    if (currentTime-lastTime>1.0f/150.f){
+        updateCollision();
+        updateInput();
+    }
+    // updateInput();
+    // updateCollision();
 }
 
 void Game::render(){
@@ -278,8 +284,8 @@ void Game::setObstacle(){
         for (int x =0; x<mapx; x++){
             if (map2D[y*bitSize+x]==2){
                 minimapTile.setPosition(x*mapS, y*mapS);
-                minimapTile.setFillColor(sf::Color::Green);
-                minimapTile.setOutlineColor(sf::Color::Black);
+                minimapTile.setFillColor({128,0,0,255});
+                minimapTile.setOutlineColor({128,0,0,255});
                 obstacles.push_back(minimapTile);
             }
         }
@@ -305,7 +311,8 @@ void Game::renderPlayerLine(){
         {spriteCentre.x+player->pdx*20,spriteCentre.y+player->pdy*20},{255,255,255});
 }
 
-void Game::updateCollision(){
+void Game::updateCollision()
+{
     //collision with bottom wall
     if (player->getBounds().top+player->getBounds().height>window->getSize().y-64.f){
         std::cout << "collision with bottom wall!" << " ";
@@ -335,7 +342,7 @@ void Game::updateCollision(){
         if (player->getBounds().intersects(obstacle.getGlobalBounds())){
             canMove =false;
             std::cout << "collision with obstacle! player position: " << player->getPos().x << " " << player->getPos().y <<"\n";
-            player->setPos({player->getPos().x+1.f,player->getPos().y+1.f});
+            player->setPos({player->getPos().x+0.001f,player->getPos().y+0.001f});
         }
         canMove =true;
     }

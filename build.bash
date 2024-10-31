@@ -1,0 +1,1 @@
+g++ -o a.out main.cpp src/Game.cpp src/Sprite.cpp src/Renderer.cpp -lsfml-graphics -lsfml-window -lsfml-system
